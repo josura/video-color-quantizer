@@ -1,4 +1,4 @@
-__kernel void uniform_quantize(
+__kernel void uniform_quantize_lower_bound(
     __global const uchar4* input_image,
     __global uchar4* output_image,
     const int width,
@@ -17,6 +17,7 @@ __kernel void uniform_quantize(
     int step = 256 / levels;
 
     uchar4 result;
+    // floor(pixel.x / step) * step gives the quantized value (lower bound of each interval)
     result.x = (uchar)((pixel.x / step) * step); // R
     result.y = (uchar)((pixel.y / step) * step); // G
     result.z = (uchar)((pixel.z / step) * step); // B
