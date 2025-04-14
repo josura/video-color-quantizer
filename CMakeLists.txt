@@ -60,6 +60,8 @@ add_executable(video_quantizer ${SOURCES})
 
 # Link to required libraries
 target_link_libraries(video_quantizer
+  ${Boost_LIBRARIES}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${OpenCL_LIBRARIES}
   ${AVFORMAT_LIBRARIES}
   ${AVCODEC_LIBRARIES}
