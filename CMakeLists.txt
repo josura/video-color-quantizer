@@ -15,6 +15,13 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 # Find OpenCL
 find_package(OpenCL REQUIRED)
 
+# Find Boost libraries with program options
+cmake_policy(SET CMP0167 NEW)
+FIND_PACKAGE(Boost COMPONENTS program_options REQUIRED)
+# print out the boost include directories
+MESSAGE( STATUS "Boost_INCLUDE_DIRS: " ${Boost_INCLUDE_DIRS} )
+
+
 # Optionally, find FFmpeg libraries manually or through pkg-config
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(AVFORMAT REQUIRED libavformat)
@@ -24,6 +31,7 @@ pkg_check_modules(SWSCALE REQUIRED libswscale)
 
 # Define include directories
 include_directories(
+  ${Boost_INCLUDE_DIRS}
   ${OpenCL_INCLUDE_DIRS}
   ${AVFORMAT_INCLUDE_DIRS}
   ${AVCODEC_INCLUDE_DIRS}
