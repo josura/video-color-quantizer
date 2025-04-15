@@ -4,6 +4,9 @@
 #include <boost/program_options.hpp>
 #include <vector>
 
+// Include the OpenCL headers as our utility code
+#include "ocl_utility.hpp"
+
 
 int main(int argc, char** argv) {
     // Initialize the program options
@@ -43,6 +46,18 @@ int main(int argc, char** argv) {
         std::cerr << "No output file provided.\n";
         return 1;
     }
+    // Select the OpenCL platform
+    cl_platform_id platform = ocl::select_platform();
+    // Select the OpenCL device
+    cl_device_id device = ocl::select_device(platform);
+    // Create the OpenCL context
+    cl_context context = ocl::create_context(platform, device);
+    // Create the command queue
+    cl_command_queue queue = ocl::create_queue(context, device);
+    // Create the OpenCL program
+    cl_program program = ocl::create_program("kernels/uniformQuantization.cl", context, device);
+    
+    // Now add your kernel, buffer setup, and execution logic
     
 
     return 0;
