@@ -7,13 +7,12 @@
 // Include the OpenCL headers as our utility code
 #include "ocl_utility.hpp"
 
-cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,
+cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,size_t lws_in,
 	cl_mem d_v1, cl_mem d_v2)
 {
-    size_t vecinit_preferred_wg_multiple = 0;
-	const size_t gws[] = { ocl::round_mul_up(nels, vecinit_preferred_wg_multiple) };
+	const size_t gws[] = { ocl::round_mul_up(nels, lws_in) };
 
-	printf("number of elements %d round to %zu GWS %zu\n", nels, vecinit_preferred_wg_multiple, gws[0]); // vecinit not used since we are not using a local work size
+	printf("number of elements %d round to %zu GWS %zu\n", nels, lws_in, gws[0]); // vecinit not used since we are not using a local work size
 
 	cl_int err = clSetKernelArg(vecinit_k, 0, sizeof(d_v1), &d_v1);
 	ocl::check(err, "setKernelArg vecinit_k 0");
@@ -106,9 +105,15 @@ int main(int argc, char** argv) {
     // Create the kernel for vector initialization
     cl_kernel vecinit_k = clCreateKernel(program2, "vector_initialization_twice", &err);
     ocl::check(err, "Creating kernel vecinit");
+
+    // get information on the preferred work group size
+    size_t lws_in = 0;
+    err = clGetKernelWorkGroupInfo(vecinit_k, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+        sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
+    ocl::check(err, "Getting preferred work group size");
     
     // Get the event for the kernel
-    cl_event vecinit_evt = vectorInit(queue, vecinit_k, N, a_buf, b_buf);
+    cl_event vecinit_evt = vectorInit(queue, vecinit_k, N, lws_in, a_buf, b_buf);
     // Wait for the event to complete
     clWaitForEvents(1, &vecinit_evt);
     // Read the results back to the host
