@@ -7,6 +7,38 @@
 // Include the OpenCL headers as our utility code
 #include "ocl_utility.hpp"
 
+cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,
+	cl_mem d_v1, cl_mem d_v2)
+{
+    size_t vecinit_preferred_wg_multiple = 0;
+	const size_t gws[] = { ocl::round_mul_up(nels, vecinit_preferred_wg_multiple) };
+
+	printf("number of elements %d round to %zu GWS %zu\n", nels, vecinit_preferred_wg_multiple, gws[0]); // vecinit not used since we are not using a local work size
+
+	cl_int err = clSetKernelArg(vecinit_k, 0, sizeof(d_v1), &d_v1);
+	ocl::check(err, "setKernelArg vecinit_k 0");
+
+	err = clSetKernelArg(vecinit_k, 1, sizeof(d_v2), &d_v2);
+	ocl::check(err, "setKernelArg vecinit_k 1");
+
+	err = clSetKernelArg(vecinit_k, 2, sizeof(nels), &nels);
+	ocl::check(err, "setKernelArg vecinit_k 2");
+
+	cl_event vecinit_evt;
+	err = clEnqueueNDRangeKernel(q, vecinit_k,
+		1, // numero dimensioni
+		NULL, // offset
+		gws, // global work size
+		NULL, // local work size
+		0, // numero di elementi nella waiting list
+		NULL, // waiting list
+		&vecinit_evt); // evento di questo comando
+	ocl::check(err, "Enqueue vecinit");
+
+	return vecinit_evt;
+}
+
+
 
 int main(int argc, char** argv) {
     // Initialize the program options
@@ -55,9 +87,37 @@ int main(int argc, char** argv) {
     // Create the command queue
     cl_command_queue queue = ocl::create_queue(context, device);
     // Create the OpenCL program
-    cl_program program = ocl::create_program("kernels/uniformQuantization.cl", context, device);
+    // cl_program program = ocl::create_program("src/kernels/uniformQuantization.cl", context, device);
     // Program for testing vector addition
-    cl_program program2 = ocl::create_program("kernels/operations.cl", context, device);
+    cl_program program2 = ocl::create_program("src/kernels/operations.cl", context, device);
+
+    // test the vector addition on a small vector
+    const int N = 1024;
+    std::vector<float> a(N, 1.0f);
+    std::vector<float> b(N, 2.0f);
+    std::vector<float> results(N, 0.0f);
+    cl_int err;
+    cl_mem a_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, N * sizeof(float), a.data(), &err);
+    ocl::check(err, "Creating buffer for a");
+    cl_mem b_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, N * sizeof(float), b.data(), &err);
+    ocl::check(err, "Creating buffer for b");
+    cl_mem result_buf = clCreateBuffer(context, CL_MEM_WRITE_ONLY, N * sizeof(float), nullptr, &err);
+    ocl::check(err, "Creating buffer for results");
+    // Create the kernel for vector initialization
+    cl_kernel vecinit_k = clCreateKernel(program2, "vector_initialization_twice", &err);
+    ocl::check(err, "Creating kernel vecinit");
+    
+    // Get the event for the kernel
+    cl_event vecinit_evt = vectorInit(queue, vecinit_k, N, a_buf, b_buf);
+    // Wait for the event to complete
+    clWaitForEvents(1, &vecinit_evt);
+    // Read the results back to the host
+    err = clEnqueueReadBuffer(queue, result_buf, CL_TRUE, 0, N * sizeof(float), results.data(), 0, nullptr, nullptr);
+    ocl::check(err, "Reading results");
+    // Print the results
+    for (int i = 0; i < N; ++i) {
+        std::cout << "Result[" << i << "] = " << results[i] << "\n";
+    }
     
     
 
