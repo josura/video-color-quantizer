@@ -56,8 +56,9 @@ int main(int argc, char** argv) {
     cl_command_queue queue = ocl::create_queue(context, device);
     // Create the OpenCL program
     cl_program program = ocl::create_program("kernels/uniformQuantization.cl", context, device);
+    // Program for testing vector addition
+    cl_program program2 = ocl::create_program("kernels/operations.cl", context, device);
     
-    // Now add your kernel, buffer setup, and execution logic
     
 
     return 0;
