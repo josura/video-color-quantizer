@@ -8,7 +8,7 @@
 #include "ocl_utility.hpp"
 
 // Include the Video class
-#include "VideoFFMPEG.hpp"
+#include "VideoReaderFFMPEG.hpp"
 
 cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,size_t lws_in,
 	cl_mem d_v1, cl_mem d_v2)
@@ -126,15 +126,16 @@ int main(int argc, char** argv) {
     // }
 
     // testing the reading of the video
-    VideoFFMPEG video(input_file);
+    VideoReaderFFMPEG video(input_file);
     std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 4);
     // get first frame for testing
-    if(video.read_next_frame(frame_data)) {
-        std::cout << "Read first frame of size: " << frame_data.size() << "\n";
-    } else {
-        std::cerr << "Failed to read first frame.\n";
-        return 1;
-    }
+    // if(video.read_next_frame(frame_data)) {
+    //     std::cout << "Read first frame of size: " << frame_data.size() << "\n";
+    // } else {
+    //     std::cerr << "Failed to read first frame.\n";
+    //     return 1;
+    // }
+    // start working on the video frames
     
 
     return 0;

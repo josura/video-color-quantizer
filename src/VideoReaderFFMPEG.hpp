@@ -1,5 +1,5 @@
 /**
- * @file VideoFFMPEG.hpp
+ * @file VideoReaderFFMPEG.hpp
  * @brief Class wrapper around FFmpeg for reading and writing video frames.
  */
 
@@ -17,21 +17,21 @@ extern "C" {
 #include <cstdint>
 
 /**
- * @class VideoFFMPEG
+ * @class VideoReaderFFMPEG
  * @brief A class for handling video reading using FFmpeg.
  */
-class VideoFFMPEG {
+class VideoReaderFFMPEG {
 public:
     /**
-     * @brief Constructs the VideoFFMPEG object and opens the video file.
+     * @brief Constructs the VideoReaderFFMPEG object and opens the video file.
      * @param filename The path to the input video file.
      */
-    explicit VideoFFMPEG(const std::string& filename);
+    explicit VideoReaderFFMPEG(const std::string& filename);
 
     /**
      * @brief Destructor that releases FFmpeg resources.
      */
-    ~VideoFFMPEG();
+    ~VideoReaderFFMPEG();
 
     /**
      * @brief Reads the next RGBA frame from the video.

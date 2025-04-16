@@ -1,13 +1,13 @@
 /**
- * @file VideoFFMPEG.cpp
- * @brief Implementation of the VideoFFMPEG class using FFmpeg.
+ * @file VideoReaderFFMPEG.cpp
+ * @brief Implementation of the VideoReaderFFMPEG class using FFmpeg.
  */
 
-#include "VideoFFMPEG.hpp"
+#include "VideoReaderFFMPEG.hpp"
 #include <stdexcept>
 #include <iostream>
 
-VideoFFMPEG::VideoFFMPEG(const std::string& filename)
+VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
     : filename_(filename), format_ctx_(nullptr), codec_ctx_(nullptr),
     codecpar_(nullptr), codec_(nullptr), frame_(nullptr),
     rgba_frame_(nullptr), packet_(nullptr), sws_ctx_(nullptr),
@@ -64,7 +64,7 @@ VideoFFMPEG::VideoFFMPEG(const std::string& filename)
     );
 }
 
-VideoFFMPEG::~VideoFFMPEG() {
+VideoReaderFFMPEG::~VideoReaderFFMPEG() {
     av_packet_free(&packet_);
     av_frame_free(&frame_);
     av_frame_free(&rgba_frame_);
@@ -73,7 +73,7 @@ VideoFFMPEG::~VideoFFMPEG() {
     avformat_close_input(&format_ctx_);
 }
 
-bool VideoFFMPEG::read_next_frame(std::vector<uint8_t>& output_buffer) {
+bool VideoReaderFFMPEG::read_next_frame(std::vector<uint8_t>& output_buffer) {
     while (av_read_frame(format_ctx_, packet_) >= 0) {
         if (packet_->stream_index == video_stream_index_) {
             if (avcodec_send_packet(codec_ctx_, packet_) == 0) {
@@ -95,14 +95,14 @@ bool VideoFFMPEG::read_next_frame(std::vector<uint8_t>& output_buffer) {
     return false;
 }
 
-int VideoFFMPEG::get_width() const {
+int VideoReaderFFMPEG::get_width() const {
     return width_;
 }
 
-int VideoFFMPEG::get_height() const {
+int VideoReaderFFMPEG::get_height() const {
     return height_;
 }
 
-int64_t VideoFFMPEG::get_frame_count() const {
+int64_t VideoReaderFFMPEG::get_frame_count() const {
     return frame_count_;
 }
