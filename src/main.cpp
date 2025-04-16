@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
     cl_program program2 = ocl::create_program("src/kernels/operations.cl", context, device);
 
     // test the vector addition on a small vector
-    const int N = 1024;
+    const int N = 512*512*256;
     std::vector<float> a(N, 1.0f);
     std::vector<float> b(N, 2.0f);
     std::vector<float> results(N, 0.0f);
@@ -136,6 +136,10 @@ int main(int argc, char** argv) {
     //     return 1;
     // }
     // start working on the video frames
+    while(video.read_next_frame(frame_data)) {
+        // process the frame data
+        // for now just print the size of the frame(already done when reading the frame)
+    }
     
 
     return 0;

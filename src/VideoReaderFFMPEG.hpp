@@ -58,6 +58,30 @@ public:
      */
     int64_t get_frame_count() const;
 
+    /**
+     * @brief Gets the expected number of frames in the video.
+     * @return The expected number of frames.
+     */
+    int64_t get_expected_frame_count() const;
+
+    /**
+     * @brief Gets the current frame index.
+     * @return The current frame index.
+     */
+    int64_t get_current_frame() const;
+
+    /**
+     * @brief Gets the frame rate of the video.
+     * @return The frame rate in frames per second.
+     */
+    int get_fps() const;
+
+    /**
+     * @brief Gets the duration of the video in microseconds.
+     * @return The duration of the video.
+     */
+    int64_t get_duration() const;
+
 private:
     std::string filename_;               ///< Path to the video file
     AVFormatContext* format_ctx_;       ///< Format context
@@ -73,6 +97,7 @@ private:
     int width_;                         ///< Frame width
     int height_;                        ///< Frame height
     int64_t frame_count_;               ///< Total number of frames (if known)
+    int64_t expected_frame_count_;      ///< Expected number of frames
     int64_t current_frame_;             ///< Current frame index
     int fps_;                          ///< Frame per second
     int64_t duration_;                  ///< Duration of the video in microseconds

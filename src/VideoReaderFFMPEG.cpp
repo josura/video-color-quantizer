@@ -54,13 +54,31 @@ VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
     rgba_frame_ = av_frame_alloc();
     packet_ = av_packet_alloc();
 
-    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1); // RGBA format, will be stored as BGRA on little-endian systems, and as ARGB on big-endian systems
+    // additional logging for debugging
+    AVColorSpace color_space = codecpar_->color_space;
+    AVColorPrimaries color_primaries = codecpar_->color_primaries;
+    AVColorTransferCharacteristic color_trc = codecpar_->color_trc;
+    AVColorRange color_range = codecpar_->color_range;
+    std::cout << "[DEBUG] Color Space: " << av_color_space_name(color_space) << "\n";
+    std::cout << "[DEBUG] Color Primaries: " << av_color_primaries_name(color_primaries) << "\n";
+    std::cout << "[DEBUG] Transfer Characteristics: " << av_color_transfer_name(color_trc) << "\n";
+    std::cout << "[DEBUG] Color Range: " << av_color_range_name(color_range) << "\n";
+    // get pixel format
+    int pixel_format = codecpar_->format;
+    auto pixel_format_name = av_get_pix_fmt_name(static_cast<AVPixelFormat>(pixel_format));
+    // print pixel format
+    std::cout << "[DEBUG] Pixel Format: " << pixel_format_name << "\n";
+    // int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1); // RGBA format, will be stored as BGRA on little-endian systems, and as ARGB on big-endian systems
+    int num_bytes = av_image_get_buffer_size(av_get_pix_fmt(pixel_format_name), width_, height_, 1); // original format
     buffer_.resize(num_bytes);
-    av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_RGB32, width_, height_, 1);
+    // av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_RGB32, width_, height_, 1);
+    av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), av_get_pix_fmt(pixel_format_name), width_, height_, 1);
 
     sws_ctx_ = sws_getContext(
         width_, height_, codec_ctx_->pix_fmt,
-        width_, height_, AV_PIX_FMT_RGB32,
+        width_, height_, 
+        //AV_PIX_FMT_RGB32,
+        av_get_pix_fmt(pixel_format_name),
         SWS_BILINEAR, nullptr, nullptr, nullptr
     );
     // read fps and duration
@@ -118,4 +136,20 @@ int VideoReaderFFMPEG::get_height() const {
 
 int64_t VideoReaderFFMPEG::get_frame_count() const {
     return frame_count_;
+}
+
+int64_t VideoReaderFFMPEG::get_expected_frame_count() const {
+    return expected_frame_count_;
+}
+
+int64_t VideoReaderFFMPEG::get_current_frame() const {
+    return current_frame_;
+}
+
+int VideoReaderFFMPEG::get_fps() const {
+    return fps_;
+}
+
+int64_t VideoReaderFFMPEG::get_duration() const {
+    return duration_;
 }
