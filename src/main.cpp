@@ -123,6 +123,8 @@ int main(int argc, char** argv) {
     for (int i = 0; i < N; ++i) {
         std::cout << "Result[" << i << "] = " << results[i] << "\n";
     }
+
+    // testing the reading of the video
     
     
 
