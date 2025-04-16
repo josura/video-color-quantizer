@@ -54,6 +54,17 @@ VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
     rgba_frame_ = av_frame_alloc();
     packet_ = av_packet_alloc();
 
+    // read fps and duration
+    fps_ = av_q2d(format_ctx_->streams[video_stream_index_]->avg_frame_rate);
+    duration_ = format_ctx_->duration;
+    std::cout << "[LOG] Video opened: " << filename_ << "\n";
+    std::cout << "[LOG] Video stream index: " << video_stream_index_ << "\n";
+    std::cout << "[LOG] Video width: " << width_ << "\n";
+    std::cout << "[LOG] Video height: " << height_ << "\n";
+    std::cout << "[LOG] Video frame count: " << frame_count_ << "\n";
+    std::cout << "[LOG] Video fps: " << fps_ << "\n";
+    double duration_in_seconds = static_cast<double>(duration_) / AV_TIME_BASE;
+    std::cout << "[LOG] Video duration: " << duration_in_seconds << " seconds\n";
     // additional logging for debugging
     AVColorSpace color_space = codecpar_->color_space;
     AVColorPrimaries color_primaries = codecpar_->color_primaries;
@@ -68,6 +79,11 @@ VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
     auto pixel_format_name = av_get_pix_fmt_name(static_cast<AVPixelFormat>(pixel_format));
     // print pixel format
     std::cout << "[DEBUG] Pixel Format: " << pixel_format_name << "\n";
+
+    // Compute the expected frame count
+    expected_frame_count_ = static_cast<int64_t>(fps_) * duration_in_seconds;
+    std::cout << "[LOG] Expected frame count: " << expected_frame_count_ << "\n";
+
     // int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1); // RGBA format, will be stored as BGRA on little-endian systems, and as ARGB on big-endian systems
     int num_bytes = av_image_get_buffer_size(av_get_pix_fmt(pixel_format_name), width_, height_, 1); // original format
     buffer_.resize(num_bytes);
@@ -81,16 +97,6 @@ VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
         av_get_pix_fmt(pixel_format_name),
         SWS_BILINEAR, nullptr, nullptr, nullptr
     );
-    // read fps and duration
-    fps_ = av_q2d(format_ctx_->streams[video_stream_index_]->avg_frame_rate);
-    duration_ = format_ctx_->duration;
-    std::cout << "[LOG] Video opened: " << filename_ << "\n";
-    std::cout << "[LOG] Video stream index: " << video_stream_index_ << "\n";
-    std::cout << "[LOG] Video width: " << width_ << "\n";
-    std::cout << "[LOG] Video height: " << height_ << "\n";
-    std::cout << "[LOG] Video frame count: " << frame_count_ << "\n";
-    std::cout << "[LOG] Video fps: " << fps_ << "\n";
-    std::cout << "[LOG] Video duration: " << duration_ / AV_TIME_BASE << " seconds\n";
 }
 
 VideoReaderFFMPEG::~VideoReaderFFMPEG() {
