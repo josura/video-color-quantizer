@@ -1,3 +1,12 @@
+/**
+ * @file uniformQuantization.cl
+ * @brief OpenCL kernels for uniform quantization of images.
+ * @details This file contains OpenCL kernels for uniform quantization of images.
+ * The quantization is performed in the RGB color space, and the alpha channel is preserved.
+ * There could be problem based on the colorspase encoding depending on where the channel are stored, so that needs to be taken into account.
+ * Since the quantization is done equally across the channels(other than the alpha channel), there is no difference if the colorspace changes the order of RGB.
+ * Problems arise if we need to work on the single channels, if the colorspace is not RGB, and the order of the transparency channel is not the last one.
+ */
 __kernel void uniform_quantize_lower_bound(
     __global const uchar4* input_image,
     __global uchar4* output_image,
