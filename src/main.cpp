@@ -7,6 +7,9 @@
 // Include the OpenCL headers as our utility code
 #include "ocl_utility.hpp"
 
+// Include the Video class
+#include "VideoFFMPEG.hpp"
+
 cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,size_t lws_in,
 	cl_mem d_v1, cl_mem d_v2)
 {
@@ -47,7 +50,7 @@ int main(int argc, char** argv) {
     // Add options
     desc.add_options()
         ("help,h", "produce help message")
-        ("input,i", po::value<std::vector<std::string>>(), "input video file name")
+        ("input,i", po::value<std::string>(), "input video file name")
         ("output,o", po::value<std::string>(), "output video file name");
     
     // Parse the command line arguments
@@ -61,10 +64,8 @@ int main(int argc, char** argv) {
     }
     // Check if input file is provided
     if (vm.count("input")) {
-        std::vector<std::string> input_files = vm["input"].as<std::vector<std::string>>();
-        for (const auto& file : input_files) {
-            std::cout << "Input file: " << file << "\n";
-        }
+        input_file = vm["input"].as<std::string>();
+        std::cout << "Input file: " << input_file << std::endl;
     } else {
         std::cerr << "No input file provided.\n";
         return 1;
@@ -120,12 +121,20 @@ int main(int argc, char** argv) {
     err = clEnqueueReadBuffer(queue, result_buf, CL_TRUE, 0, N * sizeof(float), results.data(), 0, nullptr, nullptr);
     ocl::check(err, "Reading results");
     // Print the results
-    for (int i = 0; i < N; ++i) {
-        std::cout << "Result[" << i << "] = " << results[i] << "\n";
-    }
+    // for (int i = 0; i < N; ++i) {
+    //     std::cout << "Result[" << i << "] = " << results[i] << "\n";
+    // }
 
     // testing the reading of the video
-    
+    VideoFFMPEG video(input_file);
+    std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 4);
+    // get first frame for testing
+    if(video.read_next_frame(frame_data)) {
+        std::cout << "Read first frame of size: " << frame_data.size() << "\n";
+    } else {
+        std::cerr << "Failed to read first frame.\n";
+        return 1;
+    }
     
 
     return 0;

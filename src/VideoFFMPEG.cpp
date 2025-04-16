@@ -53,13 +53,13 @@ VideoFFMPEG::VideoFFMPEG(const std::string& filename)
     rgba_frame_ = av_frame_alloc();
     packet_ = av_packet_alloc();
 
-    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, width_, height_, 1);
+    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1);
     buffer_.resize(num_bytes);
-    av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_RGBA, width_, height_, 1);
+    av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_RGB32, width_, height_, 1);
 
     sws_ctx_ = sws_getContext(
         width_, height_, codec_ctx_->pix_fmt,
-        width_, height_, AV_PIX_FMT_RGBA,
+        width_, height_, AV_PIX_FMT_RGB32,
         SWS_BILINEAR, nullptr, nullptr, nullptr
     );
 }
