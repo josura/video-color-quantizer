@@ -170,3 +170,29 @@ kernel void rgba_to_yuv(
 
     output_image[idx] = result;
 }
+
+// convert BGRA to YUV
+kernel void bgra_to_yuv(
+    __global const uchar4* input_image,
+    __global uchar4* output_image,
+    const int width,
+    const int height
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+    int idx = y * width + x;
+
+    if (x >= width || y >= height)
+        return;
+
+    uchar4 pixel = input_image[idx];
+
+    uchar4 result;
+    // YUV conversion formula
+    result.x = (uchar)(0.299 * pixel.z + 0.587 * pixel.y + 0.114 * pixel.x); // Y
+    result.y = (uchar)(-0.14713 * pixel.z - 0.28886 * pixel.y + 0.436 * pixel.x); // U
+    result.z = (uchar)(0.615 * pixel.z - 0.51499 * pixel.y - 0.10001 * pixel.x); // V
+    // removes alpha
+
+    output_image[idx] = result;
+}
