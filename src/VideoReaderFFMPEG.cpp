@@ -121,13 +121,13 @@ bool VideoReaderFFMPEG::read_next_frame(std::vector<uint8_t>& output_buffer) {
                     );
                     output_buffer.assign(buffer_.begin(), buffer_.end());
                     av_packet_unref(packet_);
+                    current_frame_++;
+                    std::cout << "[LOG] Reading frame " << current_frame_ << " of " << frame_count_ << "\n";
                     return true;
                 }
             }
         }
         av_packet_unref(packet_);
-        current_frame_++;
-        std::cout << "[LOG] Reading frame " << current_frame_ << " of " << frame_count_ << "\n";
     }
     return false;
 }
