@@ -53,7 +53,7 @@ VideoFFMPEG::VideoFFMPEG(const std::string& filename)
     rgba_frame_ = av_frame_alloc();
     packet_ = av_packet_alloc();
 
-    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1);
+    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1); // RGBA format, will be stored as BGRA on little-endian systems, and as ARGB on big-endian systems
     buffer_.resize(num_bytes);
     av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_RGB32, width_, height_, 1);
 
