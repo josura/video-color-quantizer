@@ -73,6 +73,9 @@ private:
     int width_;                         ///< Frame width
     int height_;                        ///< Frame height
     int64_t frame_count_;               ///< Total number of frames (if known)
+    int64_t current_frame_;             ///< Current frame index
+    int fps_;                          ///< Frame per second
+    int64_t duration_;                  ///< Duration of the video in microseconds
 
     std::vector<uint8_t> buffer_;       ///< Buffer for RGBA frame data
 };

@@ -48,6 +48,7 @@ VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
     width_ = codec_ctx_->width;
     height_ = codec_ctx_->height;
     frame_count_ = format_ctx_->streams[video_stream_index_]->nb_frames;
+    current_frame_ = 0;
 
     frame_ = av_frame_alloc();
     rgba_frame_ = av_frame_alloc();
@@ -62,6 +63,16 @@ VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
         width_, height_, AV_PIX_FMT_RGB32,
         SWS_BILINEAR, nullptr, nullptr, nullptr
     );
+    // read fps and duration
+    fps_ = av_q2d(format_ctx_->streams[video_stream_index_]->avg_frame_rate);
+    duration_ = format_ctx_->duration;
+    std::cout << "[LOG] Video opened: " << filename_ << "\n";
+    std::cout << "[LOG] Video stream index: " << video_stream_index_ << "\n";
+    std::cout << "[LOG] Video width: " << width_ << "\n";
+    std::cout << "[LOG] Video height: " << height_ << "\n";
+    std::cout << "[LOG] Video frame count: " << frame_count_ << "\n";
+    std::cout << "[LOG] Video fps: " << fps_ << "\n";
+    std::cout << "[LOG] Video duration: " << duration_ / AV_TIME_BASE << " seconds\n";
 }
 
 VideoReaderFFMPEG::~VideoReaderFFMPEG() {
@@ -91,6 +102,8 @@ bool VideoReaderFFMPEG::read_next_frame(std::vector<uint8_t>& output_buffer) {
             }
         }
         av_packet_unref(packet_);
+        current_frame_++;
+        std::cout << "[LOG] Reading frame " << current_frame_ << " of " << frame_count_ << "\n";
     }
     return false;
 }
