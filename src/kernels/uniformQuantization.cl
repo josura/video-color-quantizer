@@ -144,3 +144,29 @@ kernel void uniform_quantize_binary_bitshift(
 
     output_image[idx] = result;
 }
+
+// convert RGBA to YUV
+kernel void rgba_to_yuv(
+    __global const uchar4* input_image,
+    __global uchar4* output_image,
+    const int width,
+    const int height
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+    int idx = y * width + x;
+
+    if (x >= width || y >= height)
+        return;
+
+    uchar4 pixel = input_image[idx];
+
+    uchar4 result;
+    // YUV conversion formula
+    result.x = (uchar)(0.299 * pixel.x + 0.587 * pixel.y + 0.114 * pixel.z); // Y
+    result.y = (uchar)(-0.14713 * pixel.x - 0.28886 * pixel.y + 0.436 * pixel.z); // U
+    result.z = (uchar)(0.615 * pixel.x - 0.51499 * pixel.y - 0.10001 * pixel.z); // V
+    // removes alpha
+
+    output_image[idx] = result;
+}
