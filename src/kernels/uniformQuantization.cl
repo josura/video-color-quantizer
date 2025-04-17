@@ -198,8 +198,8 @@ kernel void bgra_to_yuv(
 }
 
 /* YUV operations kernels */
-// YUV uniform quantization
-kernel void yuv_uniform_quantize(
+// YUV uniform quantization with nearest rounding
+kernel void yuv_uniform_quantize_nearest(
     __global const uchar3* input_image,
     __global uchar3* output_image,
     const int width,
@@ -222,6 +222,32 @@ kernel void yuv_uniform_quantize(
     result.x = (uchar)(((pixel.x + step / 2) / step) * step); // Y
     result.y = (uchar)(((pixel.y + step / 2) / step) * step); // U
     result.z = (uchar)(((pixel.z + step / 2) / step) * step); // V
+
+    output_image[idx] = result;
+}
+
+// YUV uniform quantization with bitshift for 2 levels
+kernel void yuv_uniform_quantize_binary_bitshift(
+    __global const uchar3* input_image,
+    __global uchar3* output_image,
+    const int width,
+    const int height
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+    int idx = y * width + x;
+
+    if (x >= width || y >= height)
+        return;
+
+    uchar3 pixel = input_image[idx];
+
+    uchar3 result;
+    // pixel.x >> 7 gives either 0 or 1(if value is greater than 127), then multiply by 255 to get either 0 or 255, this logic can be used for power of 2 quantization
+    // bitwise operation
+    result.x = (pixel.x >> 7) * 255; // Y
+    result.y = (pixel.y >> 7) * 255; // U
+    result.z = (pixel.z >> 7) * 255; // V
 
     output_image[idx] = result;
 }
