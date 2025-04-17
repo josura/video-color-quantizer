@@ -196,3 +196,32 @@ kernel void bgra_to_yuv(
 
     output_image[idx] = result;
 }
+
+/* YUV operations kernels */
+// YUV uniform quantization
+kernel void yuv_uniform_quantize(
+    __global const uchar3* input_image,
+    __global uchar3* output_image,
+    const int width,
+    const int height,
+    const int levels
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+    int idx = y * width + x;
+
+    if (x >= width || y >= height)
+        return;
+
+    uchar3 pixel = input_image[idx];
+
+    int step = 256 / levels;
+
+    uchar3 result;
+    // round(pixel.x / step) * step gives the quantized value (nearest value)
+    result.x = (uchar)(((pixel.x + step / 2) / step) * step); // Y
+    result.y = (uchar)(((pixel.y + step / 2) / step) * step); // U
+    result.z = (uchar)(((pixel.z + step / 2) / step) * step); // V
+
+    output_image[idx] = result;
+}
