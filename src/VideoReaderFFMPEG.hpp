@@ -82,6 +82,12 @@ public:
      */
     int64_t get_duration() const;
 
+    /**
+     * @brief Gets the format context of the video.
+     * @return The format context.
+     */
+    SwsContext* get_sws_context() const;
+
 private:
     std::string filename_;               ///< Path to the video file
     AVFormatContext* format_ctx_;       ///< Format context

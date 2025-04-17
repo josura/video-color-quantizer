@@ -11,12 +11,26 @@ VideoWriterFFMPEG::VideoWriterFFMPEG(const std::string& filename, int width, int
     format_ctx_(nullptr), video_stream_(nullptr), codec_ctx_(nullptr), codec_(nullptr),
     frame_(nullptr), pkt_(nullptr), sws_ctx_(nullptr) {
 
+
+    // choose the codec based on the output file name, if it is webm, use VP9. Otherwise, use H.264
     avformat_alloc_output_context2(&format_ctx_, nullptr, nullptr, filename.c_str());
+    if (filename.find(".webm") != std::string::npos) {
+        format_ctx_->oformat = av_guess_format("webm", nullptr, nullptr);
+    } else {
+        format_ctx_->oformat = av_guess_format("mp4", nullptr, nullptr);
+    }
+    // avformat_alloc_output_context2(&format_ctx_, nullptr, nullptr, filename.c_str());
     if (!format_ctx_) {
         throw std::runtime_error("[THROW] VideoWriterFFMPEG::VideoWriterFFMPEG: Could not allocate output format context");
     }
 
-    codec_ = avcodec_find_encoder(AV_CODEC_ID_H264);
+    // use the correct codec based on the output file name, if it is webm, use VP9. Otherwise, use H.264
+    if (filename.find(".webm") != std::string::npos) {
+        codec_ = avcodec_find_encoder(AV_CODEC_ID_VP9);
+    } else {
+        codec_ = avcodec_find_encoder(AV_CODEC_ID_H264);
+    }
+    // codec_ = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (!codec_) {
         throw std::runtime_error("[THROW] VideoWriterFFMPEG::VideoWriterFFMPEG: H.264 encoder not found");
     }
@@ -31,14 +45,22 @@ VideoWriterFFMPEG::VideoWriterFFMPEG(const std::string& filename, int width, int
         throw std::runtime_error("[THROW] VideoWriterFFMPEG::VideoWriterFFMPEG: Could not allocate codec context");
     }
 
-    codec_ctx_->codec_id = AV_CODEC_ID_H264;
+
+    // use the correct codec
+    if(filename.find(".webm") != std::string::npos) {
+        codec_ctx_->codec_id = AV_CODEC_ID_VP9; // google VP9 codec for webm
+    } else {
+        codec_ctx_->codec_id = AV_CODEC_ID_H264; // H.264 codec
+    }
     codec_ctx_->codec_type = AVMEDIA_TYPE_VIDEO;
     codec_ctx_->width = width_;
     codec_ctx_->height = height_;
     codec_ctx_->time_base = AVRational{1, fps_};
     codec_ctx_->framerate = AVRational{fps_, 1};
     codec_ctx_->gop_size = 12;
-    codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
+    // codec_ctx_->pix_fmt = AV_PIX_FMT_RGB32; // not supported by H264
+    // codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
+    codec_ctx_->pix_fmt = AV_PIX_FMT_YUV444P; // use YUV444P 
     codec_ctx_->max_b_frames = 2;
 
     if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER) {

@@ -9,6 +9,7 @@
 
 // Include the Video class
 #include "VideoReaderFFMPEG.hpp"
+#include "VideoWriterFFMPEG.hpp"
 
 cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,size_t lws_in,
 	cl_mem d_v1, cl_mem d_v2)
@@ -38,6 +39,40 @@ cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,size_t 
 	ocl::check(err, "Enqueue vecinit");
 
 	return vecinit_evt;
+}
+
+cl_event bgra_to_yuv(cl_command_queue queue, cl_kernel bgra_to_yuv_kernel, cl_int width, cl_int height, size_t lws_in,
+    cl_mem input_image_buffer, cl_mem output_image_buffer)
+{
+    uint nels = width * height;
+    const size_t gws[] = { ocl::round_mul_up(nels, lws_in) };
+
+    printf("number of elements %d round to %zu GWS %zu\n", nels, lws_in, gws[0]); // vecinit not used since we are not using a local work size
+
+    cl_int err = clSetKernelArg(bgra_to_yuv_kernel, 0, sizeof(input_image_buffer), &input_image_buffer);
+    ocl::check(err, "setKernelArg bgra_to_yuv_kernel 0");
+
+    err = clSetKernelArg(bgra_to_yuv_kernel, 1, sizeof(output_image_buffer), &output_image_buffer);
+    ocl::check(err, "setKernelArg bgra_to_yuv_kernel 1");
+
+    err = clSetKernelArg(bgra_to_yuv_kernel, 2, sizeof(width), &width);
+    ocl::check(err, "setKernelArg bgra_to_yuv_kernel 2");
+
+    err = clSetKernelArg(bgra_to_yuv_kernel, 3, sizeof(height), &height);
+    ocl::check(err, "setKernelArg bgra_to_yuv_kernel 3");
+
+    cl_event bgra_to_yuv_evt;
+    err = clEnqueueNDRangeKernel(queue, bgra_to_yuv_kernel,
+        1, // numero dimensioni
+        NULL, // offset
+        gws, // global work size
+        NULL, // local work size
+        0, // numero di elementi nella waiting list
+        NULL, // waiting list
+        &bgra_to_yuv_evt); // evento di questo comando
+    ocl::check(err, "Enqueue vecinit");
+
+    return bgra_to_yuv_evt;
 }
 
 
@@ -127,7 +162,8 @@ int main(int argc, char** argv) {
 
     // testing the reading of the video
     VideoReaderFFMPEG video(input_file);
-    std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 4);
+    // std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 4); // BGRA RGB32
+    std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 3); // YUV444P
     // get first frame for testing
     // if(video.read_next_frame(frame_data)) {
     //     std::cout << "Read first frame of size: " << frame_data.size() << "\n";
@@ -136,9 +172,51 @@ int main(int argc, char** argv) {
     //     return 1;
     // }
     // start working on the video frames
+    // create the kernel for the conversion
+    // cl_kernel bgra_to_yuv_kernel = clCreateKernel(program2, "bgra_to_yuv", &err);
+    // ocl::check(err, "Creating kernel bgra_to_yuv");
+    // // get information on the preferred work group size
+    // size_t lws_in = 0;
+    // err = clGetKernelWorkGroupInfo(bgra_to_yuv_kernel, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+    //     sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
+    // ocl::check(err, "Getting preferred work group size");
+
+    VideoWriterFFMPEG videoOutput(output_file, video.get_width(), video.get_height(), video.get_fps());
     while(video.read_next_frame(frame_data)) {
         // process the frame data
-        // for now just print the size of the frame(already done when reading the frame)
+        // TODO
+        // create another buffer that converts the frame data(BGRA) to the correct format (YUV420P)
+        // std::vector<uint8_t> yuv_frame_data(video.get_width() * video.get_height() * 3 / 2);
+        // YUV444P is 3 bytes per pixel
+        std::vector<uint8_t> yuv_frame_data(video.get_width() * video.get_height() * 3);
+        // saving the frame to the output file
+        // create the buffer for the input image
+        // cl_mem input_image_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+        //     frame_data.size(), frame_data.data(), &err);
+        // ocl::check(err, "Creating buffer for input image");
+        // // create the buffer for the output image
+        // cl_mem output_image_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+        //     yuv_frame_data.size(), nullptr, &err);
+        // ocl::check(err, "Creating buffer for output image");
+        // // create the event
+        // cl_event bgra_to_yuv_evt = bgra_to_yuv(queue, bgra_to_yuv_kernel,
+        //     video.get_width(), video.get_height(), lws_in, input_image_buffer, output_image_buffer);
+        // // wait for the event to complete
+        // clWaitForEvents(1, &bgra_to_yuv_evt);
+        // // read the output image
+        // err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0,
+        //     yuv_frame_data.size(), yuv_frame_data.data(), 0, nullptr, nullptr);
+        // ocl::check(err, "Reading output image");
+        // or use sws_scale to convert the frame data to YUV420P
+        // const uint8_t *srcSlice = frame_data.data();
+        // const int srcStride = video.get_width() * 4; 
+        // int srcSliceY = 0;
+        // int srcSliceH = video.get_height();
+        // uint8_t *dst = yuv_frame_data.data();
+        // const int dstStride = video.get_width() * 3 / 2;
+        // sws_scale(video.get_sws_context(), &srcSlice, &srcStride,
+        //     srcSliceY, srcSliceH, &dst, &dstStride);
+        videoOutput.write_frame(frame_data.data());
     }
     
 
