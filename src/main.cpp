@@ -282,39 +282,7 @@ int main(int argc, char** argv) {
     VideoWriterFFMPEG videoOutput(output_file, video.get_width(), video.get_height(), video.get_fps());
     while(video.read_next_frame(frame_data)) {
         // process the frame data
-        // TODO
-        // create another buffer that converts the frame data(BGRA) to the correct format (YUV420P)
-        // std::vector<uint8_t> yuv_frame_data(video.get_width() * video.get_height() * 3 / 2);
-        // YUV444P is 3 bytes per pixel
-        // std::vector<uint8_t> yuv_frame_data(video.get_width() * video.get_height() * 3);
-        // saving the frame to the output file
-        // create the buffer for the input image
-        // cl_mem input_image_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-        //     frame_data.size(), frame_data.data(), &err);
-        // ocl::check(err, "Creating buffer for input image");
-        // // create the buffer for the output image
-        // cl_mem output_image_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-        //     yuv_frame_data.size(), nullptr, &err);
-        // ocl::check(err, "Creating buffer for output image");
-        // // create the event
-        // cl_event bgra_to_yuv_evt = bgra_to_yuv(queue, bgra_to_yuv_kernel,
-        //     video.get_width(), video.get_height(), lws_in, input_image_buffer, output_image_buffer);
-        // // wait for the event to complete
-        // clWaitForEvents(1, &bgra_to_yuv_evt);
-        // // read the output image
-        // err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0,
-        //     yuv_frame_data.size(), yuv_frame_data.data(), 0, nullptr, nullptr);
-        // ocl::check(err, "Reading output image");
-        // or use sws_scale to convert the frame data to YUV420P
-        // const uint8_t *srcSlice = frame_data.data();
-        // const int srcStride = video.get_width() * 4; 
-        // int srcSliceY = 0;
-        // int srcSliceH = video.get_height();
-        // uint8_t *dst = yuv_frame_data.data();
-        // const int dstStride = video.get_width() * 3 / 2;
-        // sws_scale(video.get_sws_context(), &srcSlice, &srcStride,
-        //     srcSliceY, srcSliceH, &dst, &dstStride);
-        // convert the BRGA to RGBA
+        // convert the BRGA to RGBA, since the conversion in FFMPEG has some problems
         cl_mem input_image_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
             frame_data.size(), frame_data.data(), &err);
         ocl::check(err, "Creating buffer for input image");
@@ -327,6 +295,9 @@ int main(int argc, char** argv) {
             video.get_width(), video.get_height(), lws_in, input_image_buffer, output_image_buffer);
         // wait for the event to complete
         clWaitForEvents(1, &bgra_to_rgba_evt);
+        // quantize the image depending on input parameters
+        // the input parameters will establish which kernel to use and the number of levels in case of quantization with more than 2 levels
+
         // read the output image
         err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0,
             frame_data_output.size(), frame_data_output.data(), 0, nullptr, nullptr);
