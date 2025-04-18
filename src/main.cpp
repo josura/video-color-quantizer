@@ -41,6 +41,39 @@ cl_event vectorInit(cl_command_queue q, cl_kernel vecinit_k, cl_int nels,size_t 
 	return vecinit_evt;
 }
 
+cl_event vectorAddition(cl_command_queue q, cl_kernel vecadd_k, cl_int nels,size_t lws_in,
+    cl_mem d_v1, cl_mem d_v2, cl_mem d_results)
+{
+    const size_t gws[] = { ocl::round_mul_up(nels, lws_in) };
+
+    printf("number of elements %d round to %zu GWS %zu\n", nels, lws_in, gws[0]); // vecinit not used since we are not using a local work size
+
+    cl_int err = clSetKernelArg(vecadd_k, 0, sizeof(d_v1), &d_v1);
+    ocl::check(err, "setKernelArg vecadd_k 0");
+
+    err = clSetKernelArg(vecadd_k, 1, sizeof(d_v2), &d_v2);
+    ocl::check(err, "setKernelArg vecadd_k 1");
+
+    err = clSetKernelArg(vecadd_k, 2, sizeof(d_results), &d_results);
+    ocl::check(err, "setKernelArg vecadd_k 2");
+
+    err = clSetKernelArg(vecadd_k, 3, sizeof(nels), &nels);
+    ocl::check(err, "setKernelArg vecadd_k 3");
+
+    cl_event vecadd_evt;
+    err = clEnqueueNDRangeKernel(q, vecadd_k,
+        1, // numero dimensioni
+        NULL, // offset
+        gws, // global work size
+        NULL, // local work size
+        0, // numero di elementi nella waiting list
+        NULL, // waiting list
+        &vecadd_evt); // evento di questo comando
+    ocl::check(err, "Enqueue vecinit");
+
+    return vecadd_evt;
+}
+
 cl_event bgra_to_yuv(cl_command_queue queue, cl_kernel bgra_to_yuv_kernel, cl_int width, cl_int height, size_t lws_in,
     cl_mem input_image_buffer, cl_mem output_image_buffer)
 {
@@ -73,6 +106,40 @@ cl_event bgra_to_yuv(cl_command_queue queue, cl_kernel bgra_to_yuv_kernel, cl_in
     ocl::check(err, "Enqueue vecinit");
 
     return bgra_to_yuv_evt;
+}
+
+cl_event brga_to_rgba(cl_command_queue queue, cl_kernel bgra_to_rgba_kernel, cl_int width, cl_int height, size_t lws_in,
+    cl_mem input_image_buffer, cl_mem output_image_buffer)
+{
+    uint nels = width * height;
+    const size_t gws[] = { ocl::round_mul_up(nels, lws_in) };
+
+    printf("number of elements %d round to %zu GWS %zu\n", nels, lws_in, gws[0]); // vecinit not used since we are not using a local work size
+
+    cl_int err = clSetKernelArg(bgra_to_rgba_kernel, 0, sizeof(input_image_buffer), &input_image_buffer);
+    ocl::check(err, "setKernelArg bgra_to_rgba_kernel 0");
+
+    err = clSetKernelArg(bgra_to_rgba_kernel, 1, sizeof(output_image_buffer), &output_image_buffer);
+    ocl::check(err, "setKernelArg bgra_to_rgba_kernel 1");
+
+    err = clSetKernelArg(bgra_to_rgba_kernel, 2, sizeof(width), &width);
+    ocl::check(err, "setKernelArg bgra_to_rgba_kernel 2");
+
+    err = clSetKernelArg(bgra_to_rgba_kernel, 3, sizeof(height), &height);
+    ocl::check(err, "setKernelArg bgra_to_rgba_kernel 3");
+
+    cl_event bgra_to_rgba_evt;
+    err = clEnqueueNDRangeKernel(queue, bgra_to_rgba_kernel,
+        1, // numero dimensioni
+        NULL, // offset
+        gws, // global work size
+        NULL, // local work size
+        0, // numero di elementi nella waiting list
+        NULL, // waiting list
+        &bgra_to_rgba_evt); // evento di questo comando
+    ocl::check(err, "Enqueue vecinit");
+
+    return bgra_to_rgba_evt;
 }
 
 
@@ -122,12 +189,12 @@ int main(int argc, char** argv) {
     // Create the command queue
     cl_command_queue queue = ocl::create_queue(context, device);
     // Create the OpenCL program
-    // cl_program program = ocl::create_program("src/kernels/uniformQuantization.cl", context, device);
+    cl_program program = ocl::create_program("src/kernels/uniformQuantization.cl", context, device);
     // Program for testing vector addition
     cl_program program2 = ocl::create_program("src/kernels/operations.cl", context, device);
 
     // test the vector addition on a small vector
-    const int N = 512*512*256;
+    const int N = 256;
     std::vector<float> a(N, 1.0f);
     std::vector<float> b(N, 2.0f);
     std::vector<float> results(N, 0.0f);
@@ -152,13 +219,40 @@ int main(int argc, char** argv) {
     cl_event vecinit_evt = vectorInit(queue, vecinit_k, N, lws_in, a_buf, b_buf);
     // Wait for the event to complete
     clWaitForEvents(1, &vecinit_evt);
-    // Read the results back to the host
+    // Create the kernel for vector addition
+    cl_kernel vecadd_k = clCreateKernel(program2, "vector_addition4", &err);
+    ocl::check(err, "Creating kernel vecadd");
+    // get information on the preferred work group size
+    err = clGetKernelWorkGroupInfo(vecadd_k, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+        sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
+    ocl::check(err, "Getting preferred work group size");
+    // Get the event for the kernel
+    cl_event vecadd_evt = vectorAddition(queue, vecadd_k, N, lws_in, a_buf, b_buf, result_buf);
+    // Wait for the event to complete
+    clWaitForEvents(1, &vecadd_evt);
+    // Read the vector initialization results
+    err = clEnqueueReadBuffer(queue, a_buf, CL_TRUE, 0, N * sizeof(float), a.data(), 0, nullptr, nullptr);
+    ocl::check(err, "Reading buffer a");
+    err = clEnqueueReadBuffer(queue, b_buf, CL_TRUE, 0, N * sizeof(float), b.data(), 0, nullptr, nullptr);
+    ocl::check(err, "Reading buffer b");
     err = clEnqueueReadBuffer(queue, result_buf, CL_TRUE, 0, N * sizeof(float), results.data(), 0, nullptr, nullptr);
-    ocl::check(err, "Reading results");
-    // Print the results
-    // for (int i = 0; i < N; ++i) {
-    //     std::cout << "Result[" << i << "] = " << results[i] << "\n";
-    // }
+    ocl::check(err, "Reading buffer results");
+    // Control if the results are correct, meaning vector a have increasing values from 0 to N, and vector b has decreasing values from N to 0
+    for (int i = 0; i < N; ++i) {
+        if (results[i] != a[i] + b[i]) {
+            std::cout << "Results are not correct at index " << i << ": " << results[i] << "\n";
+            break;
+        }
+    }
+    // free the buffers
+    clReleaseMemObject(a_buf);
+    clReleaseMemObject(b_buf);
+    clReleaseMemObject(result_buf);
+    // free the kernels
+    clReleaseKernel(vecinit_k);
+    clReleaseKernel(vecadd_k);
+    // free the program
+    clReleaseProgram(program2);
 
     // testing the reading of the video
     VideoReaderFFMPEG video(input_file);
@@ -180,6 +274,10 @@ int main(int argc, char** argv) {
     // err = clGetKernelWorkGroupInfo(bgra_to_yuv_kernel, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
     //     sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
     // ocl::check(err, "Getting preferred work group size");
+    // // create the kernel for the conversion
+    cl_kernel bgra_to_rgba_kernel = clCreateKernel(program, "brga_to_rgba", &err);
+    ocl::check(err, "Creating kernel bgra_to_rgba");
+    std::vector<uint8_t> frame_data_output(video.get_width() * video.get_height() * 4); // RGBA
 
     VideoWriterFFMPEG videoOutput(output_file, video.get_width(), video.get_height(), video.get_fps());
     while(video.read_next_frame(frame_data)) {
@@ -216,6 +314,34 @@ int main(int argc, char** argv) {
         // const int dstStride = video.get_width() * 3 / 2;
         // sws_scale(video.get_sws_context(), &srcSlice, &srcStride,
         //     srcSliceY, srcSliceH, &dst, &dstStride);
+        // convert the BRGA to RGBA
+        cl_mem input_image_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            frame_data.size(), frame_data.data(), &err);
+        ocl::check(err, "Creating buffer for input image");
+        // create the buffer for the output image
+        cl_mem output_image_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+            frame_data.size(), nullptr, &err);
+        ocl::check(err, "Creating buffer for output image");
+        // create the event
+        cl_event bgra_to_rgba_evt = brga_to_rgba(queue, bgra_to_rgba_kernel,
+            video.get_width(), video.get_height(), lws_in, input_image_buffer, output_image_buffer);
+        // wait for the event to complete
+        clWaitForEvents(1, &bgra_to_rgba_evt);
+        // read the output image
+        err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0,
+            frame_data_output.size(), frame_data_output.data(), 0, nullptr, nullptr);
+        ocl::check(err, "Reading output image");
+        // free the buffers
+        clReleaseMemObject(input_image_buffer);
+        clReleaseMemObject(output_image_buffer);
+        // control if the two vectors are the same
+        for (uint i = 0; i < frame_data.size(); ++i) {
+            if (frame_data[i] != frame_data_output[i]) {
+                std::cout << "Frame data and output data are different at index " << i << "\n";
+                break;
+            }
+        }
+        // write the frame to the output file
         videoOutput.write_frame(frame_data.data());
     }
     

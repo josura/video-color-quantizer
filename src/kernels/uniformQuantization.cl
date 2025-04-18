@@ -197,6 +197,36 @@ kernel void bgra_to_yuv(
     output_image[idx] = result;
 }
 
+// convert BRGA to RGBA
+kernel void brga_to_rgba(
+    __global const uchar4* input_image,
+    __global uchar4* output_image,
+    const int width,
+    const int height
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+    int idx = y * width + x;
+
+    if (x >= width || y >= height)
+        return;
+
+    uchar4 pixel = input_image[idx];
+
+    uchar4 result;
+    // BRGA to RGBA conversion
+    // result.x = pixel.z; // R
+    // result.y = pixel.y; // G
+    // result.z = pixel.x; // B
+    // result.w = pixel.w; // A
+    result.x = pixel.x; // R
+    result.y = pixel.y; // G
+    result.z = pixel.z; // B
+    result.w = pixel.w; // A
+
+    output_image[idx] = result;
+}
+
 /* YUV operations kernels */
 // YUV uniform quantization with nearest rounding
 kernel void yuv_uniform_quantize_nearest(

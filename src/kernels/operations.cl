@@ -11,6 +11,19 @@ __kernel void vector_addition(__global const float* a,
     }
 }
 
+__kernel void vector_addition4(__global const float4* a, 
+                                  __global const float4* b, 
+                                  __global float4* result, 
+                                  const int nels) {
+    // Get the index of the current element
+    int id = get_global_id(0);
+
+    // Perform addition if within bounds
+    if (id < nels) {
+        result[id] = a[id] + b[id];
+    }
+}
+
 __kernel void vector_initialization_once(__global float* a, 
                                   const int nels) {
     // Get the index of the current element
