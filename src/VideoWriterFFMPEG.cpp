@@ -7,7 +7,7 @@
 #include <iostream>
 
 VideoWriterFFMPEG::VideoWriterFFMPEG(const std::string& filename, int width, int height, int fps)
-    : filename_(filename), width_(width), height_(height), fps_(fps), frame_index_(0),
+    : filename_(filename), width_(width), height_(height), fps_(fps), frame_index_(0), last_dts(0),
     format_ctx_(nullptr), video_stream_(nullptr), codec_ctx_(nullptr), codec_(nullptr),
     frame_(nullptr), pkt_(nullptr), sws_ctx_(nullptr) {
 
@@ -61,7 +61,8 @@ VideoWriterFFMPEG::VideoWriterFFMPEG(const std::string& filename, int width, int
     // codec_ctx_->pix_fmt = AV_PIX_FMT_RGB32; // not supported by H264
     // codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
     codec_ctx_->pix_fmt = AV_PIX_FMT_YUV444P; // use YUV444P 
-    codec_ctx_->max_b_frames = 2;
+    // codec_ctx_->max_b_frames = 2; // seems to create problems probably, setting to 0 to simplify DTS and PTS management
+    codec_ctx_->max_b_frames = 0;
 
     if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER) {
         codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -115,14 +116,29 @@ VideoWriterFFMPEG::VideoWriterFFMPEG(const std::string& filename, int width, int
 }
 
 VideoWriterFFMPEG::~VideoWriterFFMPEG() {
+    // if (codec_ctx_) {
+    //     avcodec_send_frame(codec_ctx_, nullptr);
+    //     while (avcodec_receive_packet(codec_ctx_, pkt_) == 0) {
+    //         av_interleaved_write_frame(format_ctx_, pkt_);
+    //         av_packet_unref(pkt_);
+    //     }
+    // }
+    // Flush the encoder
     if (codec_ctx_) {
-        avcodec_send_frame(codec_ctx_, nullptr);
-        while (avcodec_receive_packet(codec_ctx_, pkt_) == 0) {
-            av_interleaved_write_frame(format_ctx_, pkt_);
-            av_packet_unref(pkt_);
+        // Send a null frame to signal the end of the stream
+        if (avcodec_send_frame(codec_ctx_, nullptr) >= 0) {
+            // Receive and write all remaining packets
+            while (avcodec_receive_packet(codec_ctx_, pkt_) == 0) {
+                av_packet_rescale_ts(pkt_, codec_ctx_->time_base, video_stream_->time_base);
+                pkt_->stream_index = video_stream_->index;
+                av_interleaved_write_frame(format_ctx_, pkt_);
+                av_packet_unref(pkt_);
+            }
         }
     }
 
+    // Write the trailer to the output file
+    // This is important to finalize the file and write any remaining data
     av_write_trailer(format_ctx_);
 
     if (pkt_) {
@@ -165,6 +181,13 @@ void VideoWriterFFMPEG::write_frame(const uint8_t* rgba_data) {
     while (avcodec_receive_packet(codec_ctx_, pkt_) == 0) {
         av_packet_rescale_ts(pkt_, codec_ctx_->time_base, video_stream_->time_base);
         pkt_->stream_index = video_stream_->index;
+
+        // Ensure DTS is strictly increasing
+        if (pkt_->dts <= last_dts) {
+            pkt_->dts = last_dts + 1;
+            pkt_->pts = std::max(pkt_->pts, pkt_->dts);
+        }
+        last_dts = pkt_->dts;
 
         if (av_interleaved_write_frame(format_ctx_, pkt_) < 0) {
             throw std::runtime_error("[THROW] VideoWriterFFMPEG::write_frame: Error writing packet");

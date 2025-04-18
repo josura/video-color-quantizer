@@ -47,12 +47,14 @@ private:
     int height_;
     int fps_;
     int frame_index_;
+    int64_t last_dts; // last DTS value
 
     AVFormatContext* format_ctx_;
     AVStream* video_stream_;
-    AVCodecContext* codec_ctx_;
-    const AVCodec* codec_;
-    AVFrame* frame_;
-    AVPacket* pkt_;
+    AVCodecContext* codec_ctx_; // AVCodecContext is used to encode and decode video and audio data
+    const AVCodec* codec_; // AVCodec is used to encode and decode video and audio data
+    AVFrame* frame_; // AVFrame is used to store decoded data
+    AVPacket* pkt_; // AVPacket is used to store encoded data
     SwsContext* sws_ctx_;
+    
 };
