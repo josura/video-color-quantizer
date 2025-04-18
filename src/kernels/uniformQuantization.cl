@@ -205,23 +205,22 @@ kernel void brga_to_rgba(
     const int height
 ) {
     int x = get_global_id(0);
-    int y = get_global_id(1);
-    int idx = y * width + x;
+    // int y = get_global_id(1);
+    // int idx = y * width + x;
+    int idx = x; // Assuming 1D processing for simplicity
 
-    if (x >= width || y >= height)
+    // if (x >= width || y >= height)
+    //     return;
+    if (idx >= width*height)
         return;
 
     uchar4 pixel = input_image[idx];
 
     uchar4 result;
     // BRGA to RGBA conversion
-    // result.x = pixel.z; // R
-    // result.y = pixel.y; // G
-    // result.z = pixel.x; // B
-    // result.w = pixel.w; // A
-    result.x = pixel.x; // R
+    result.x = pixel.z; // R
     result.y = pixel.y; // G
-    result.z = pixel.z; // B
+    result.z = pixel.x; // B
     result.w = pixel.w; // A
 
     output_image[idx] = result;

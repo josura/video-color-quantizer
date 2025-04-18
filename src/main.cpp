@@ -194,7 +194,7 @@ int main(int argc, char** argv) {
     cl_program program2 = ocl::create_program("src/kernels/operations.cl", context, device);
 
     // test the vector addition on a small vector
-    const int N = 256;
+    const int N = 512*512;
     std::vector<float> a(N, 1.0f);
     std::vector<float> b(N, 2.0f);
     std::vector<float> results(N, 0.0f);
@@ -334,15 +334,10 @@ int main(int argc, char** argv) {
         // free the buffers
         clReleaseMemObject(input_image_buffer);
         clReleaseMemObject(output_image_buffer);
-        // control if the two vectors are the same
-        for (uint i = 0; i < frame_data.size(); ++i) {
-            if (frame_data[i] != frame_data_output[i]) {
-                std::cout << "Frame data and output data are different at index " << i << "\n";
-                break;
-            }
-        }
+        // free the event
+        clReleaseEvent(bgra_to_rgba_evt);
         // write the frame to the output file
-        videoOutput.write_frame(frame_data.data());
+        videoOutput.write_frame(frame_data_output.data());
     }
     
 
