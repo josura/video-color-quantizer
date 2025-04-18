@@ -162,8 +162,8 @@ int main(int argc, char** argv) {
 
     // testing the reading of the video
     VideoReaderFFMPEG video(input_file);
-    // std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 4); // BGRA RGB32
-    std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 3); // YUV444P
+    std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 4); // BGRA RGB32
+    // std::vector<uint8_t> frame_data(video.get_width() * video.get_height() * 3); // YUV444P
     // get first frame for testing
     // if(video.read_next_frame(frame_data)) {
     //     std::cout << "Read first frame of size: " << frame_data.size() << "\n";
@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
         // create another buffer that converts the frame data(BGRA) to the correct format (YUV420P)
         // std::vector<uint8_t> yuv_frame_data(video.get_width() * video.get_height() * 3 / 2);
         // YUV444P is 3 bytes per pixel
-        std::vector<uint8_t> yuv_frame_data(video.get_width() * video.get_height() * 3);
+        // std::vector<uint8_t> yuv_frame_data(video.get_width() * video.get_height() * 3);
         // saving the frame to the output file
         // create the buffer for the input image
         // cl_mem input_image_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,

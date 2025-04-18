@@ -84,19 +84,19 @@ VideoReaderFFMPEG::VideoReaderFFMPEG(const std::string& filename)
     expected_frame_count_ = static_cast<int64_t>(fps_) * duration_in_seconds;
     std::cout << "[LOG] Expected frame count: " << expected_frame_count_ << "\n";
 
-    // int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1); // RGBA format, will be stored as BGRA on little-endian systems, and as ARGB on big-endian systems
-    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_YUV444P, width_, height_, 1); // YUV444P format
+    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, width_, height_, 1); // RGBA format, will be stored as BGRA on little-endian systems, and as ARGB on big-endian systems
+    // int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_YUV444P, width_, height_, 1); // YUV444P format
     // int num_bytes = av_image_get_buffer_size(av_get_pix_fmt(pixel_format_name), width_, height_, 1); // original format
     buffer_.resize(num_bytes);
-    // av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_RGB32, width_, height_, 1);
-    av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_YUV444P, width_, height_, 1);
+    av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_RGB32, width_, height_, 1);
+    // av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), AV_PIX_FMT_YUV444P, width_, height_, 1);
     // av_image_fill_arrays(rgba_frame_->data, rgba_frame_->linesize, buffer_.data(), av_get_pix_fmt(pixel_format_name), width_, height_, 1);
 
     sws_ctx_ = sws_getContext(
         width_, height_, codec_ctx_->pix_fmt,
         width_, height_, 
-        AV_PIX_FMT_YUV444P,
-        // AV_PIX_FMT_RGB32,
+        // AV_PIX_FMT_YUV444P,
+        AV_PIX_FMT_RGB32,
         // av_get_pix_fmt(pixel_format_name),
         SWS_BILINEAR, nullptr, nullptr, nullptr
     );
