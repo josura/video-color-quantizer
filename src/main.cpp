@@ -153,6 +153,7 @@ int main(int argc, char** argv) {
     desc.add_options()
         ("help,h", "produce help message")
         ("input,i", po::value<std::string>(), "input video file name")
+        ("levels,l", po::value<int>()->default_value(256), "number of levels for quantization")
         ("output,o", po::value<std::string>(), "output video file name");
     
     // Parse the command line arguments
@@ -278,6 +279,12 @@ int main(int argc, char** argv) {
     cl_kernel bgra_to_rgba_kernel = clCreateKernel(program, "brga_to_rgba", &err);
     ocl::check(err, "Creating kernel bgra_to_rgba");
     std::vector<uint8_t> frame_data_output(video.get_width() * video.get_height() * 4); // RGBA
+    cl_kernel quantization_kernel = clCreateKernel(program, "uniform_quantize_nearest", &err);
+    ocl::check(err, "Creating kernel quantization");
+    // get information on the preferred work group size
+    err = clGetKernelWorkGroupInfo(quantization_kernel, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+        sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
+    ocl::check(err, "Getting preferred work group size");
 
     VideoWriterFFMPEG videoOutput(output_file, video.get_width(), video.get_height(), video.get_fps());
     while(video.read_next_frame(frame_data)) {
