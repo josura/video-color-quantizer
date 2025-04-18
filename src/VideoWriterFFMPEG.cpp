@@ -155,7 +155,8 @@ void VideoWriterFFMPEG::write_frame(const uint8_t* rgba_data) {
 
     sws_scale(sws_ctx_, in_data, in_linesize, 0, height_, frame_->data, frame_->linesize);
 
-    frame_->pts = frame_index_++;
+    frame_->pts = av_rescale_q(frame_index_, AVRational{1, fps_}, codec_ctx_->time_base);
+    frame_index_++;
 
     if (avcodec_send_frame(codec_ctx_, frame_) < 0) {
         throw std::runtime_error("[THROW] VideoWriterFFMPEG::write_frame: Error sending frame to encoder");
