@@ -398,6 +398,11 @@ int main(int argc, char** argv) {
         quantization_kernel = clCreateKernel(program, "uniform_quantize_nearest", &err);
         ocl::check(err, "Creating kernel uniform_quantize");
     }
+    cl_kernel grayscale_kernel;
+    if (grayscale) {
+        grayscale_kernel = clCreateKernel(program, "rgba_to_grayscale", &err);
+        ocl::check(err, "Creating kernel grayscale");
+    }
     // get information on the preferred work group size
     err = clGetKernelWorkGroupInfo(quantization_kernel, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
         sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
