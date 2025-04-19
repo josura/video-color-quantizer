@@ -145,6 +145,31 @@ kernel void uniform_quantize_binary_bitshift(
     output_image[idx] = result;
 }
 
+// convert RGB to grayscale RGB
+kernel void rgb_to_grayscale(
+    __global const uchar4* input_image,
+    __global uchar4* output_image,
+    const int width,
+    const int height
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+    int idx = y * width + x;
+
+    if (x >= width || y >= height)
+        return;
+
+    uchar4 pixel = input_image[idx];
+
+    uchar4 result;
+    // Grayscale conversion formula
+    result.x = (uchar)(0.299 * pixel.x + 0.587 * pixel.y + 0.114 * pixel.z); // R
+    result.y = (uchar)(0.299 * pixel.x + 0.587 * pixel.y + 0.114 * pixel.z); // G
+    result.z = (uchar)(0.299 * pixel.x + 0.587 * pixel.y + 0.114 * pixel.z); // B
+
+    output_image[idx] = result;
+}
+
 // convert RGBA to YUV
 kernel void rgba_to_yuv(
     __global const uchar4* input_image,

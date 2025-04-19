@@ -142,6 +142,32 @@ cl_event brga_to_rgba(cl_command_queue queue, cl_kernel bgra_to_rgba_kernel, cl_
     return bgra_to_rgba_evt;
 }
 
+cl_event rgba_to_grayscale(cl_command_queue queue, cl_kernel rgba_to_grayscale_kernel, cl_int width, cl_int height, size_t lws_in,
+    cl_mem input_image_buffer, cl_mem output_image_buffer)
+{
+    const size_t gws[] = { ocl::round_mul_up(width, lws_in), ocl::round_mul_up(height, lws_in) };
+    printf("number of elements %d round to %zu GWS %zu\n", width * height, lws_in, gws[0]); 
+    cl_int err = clSetKernelArg(rgba_to_grayscale_kernel, 0, sizeof(input_image_buffer), &input_image_buffer);
+    ocl::check(err, "setKernelArg rgba_to_grayscale_kernel 0");
+    err = clSetKernelArg(rgba_to_grayscale_kernel, 1, sizeof(output_image_buffer), &output_image_buffer);
+    ocl::check(err, "setKernelArg rgba_to_grayscale_kernel 1");
+    err = clSetKernelArg(rgba_to_grayscale_kernel, 2, sizeof(width), &width);
+    ocl::check(err, "setKernelArg rgba_to_grayscale_kernel 2");
+    err = clSetKernelArg(rgba_to_grayscale_kernel, 3, sizeof(height), &height);
+    ocl::check(err, "setKernelArg rgba_to_grayscale_kernel 3");
+    cl_event rgba_to_grayscale_evt;
+    err = clEnqueueNDRangeKernel(queue, rgba_to_grayscale_kernel,
+        2, // numero dimensioni
+        NULL, // offset
+        gws, // global work size
+        NULL, // local work size
+        0, // numero di elementi nella waiting list
+        NULL, // waiting list
+        &rgba_to_grayscale_evt); // evento di questo comando
+    ocl::check(err, "Enqueue rgba_to_grayscale");
+    return rgba_to_grayscale_evt;
+}
+
 
 
 int main(int argc, char** argv) {
@@ -149,13 +175,14 @@ int main(int argc, char** argv) {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     std::string input_file, output_file;
-    bool binarize = false;
+    bool binarize = false, grayscale = false;
     // Add options
     desc.add_options()
         ("help,h", "produce help message")
         ("input,i", po::value<std::string>(), "input video file name")
         ("levels,l", po::value<int>()->default_value(256), "number of levels for quantization")
         ("binarize", po::bool_switch(&binarize)->default_value(false), "binarize the image")
+        ("grayscale", po::bool_switch(&grayscale)->default_value(false), "convert to grayscale")
         ("output,o", po::value<std::string>(), "output video file name");
     
     // Parse the command line arguments
@@ -172,7 +199,7 @@ int main(int argc, char** argv) {
         input_file = vm["input"].as<std::string>();
         std::cout << "Input file: " << input_file << std::endl;
     } else {
-        std::cerr << "No input file provided.\n";
+        std::cerr << "No input file provided.\n"; 
         return 1;
     }
     // Check if output file is provided
