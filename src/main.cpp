@@ -424,9 +424,19 @@ int main(int argc, char** argv) {
             video.get_width(), video.get_height(), lws_in, input_image_buffer, output_image_buffer);
         // wait for the event to complete
         clWaitForEvents(1, &bgra_to_rgba_evt);
+        // grayscale the image if needed
+        if (grayscale) {
+            cl_event grayscale_evt = rgba_to_grayscale(queue, grayscale_kernel,
+                video.get_width(), video.get_height(), lws_in, output_image_buffer, input_image_buffer);
+            // wait for the event to complete
+            clWaitForEvents(1, &grayscale_evt);
+            // swap the buffers
+            std::swap(input_image_buffer, output_image_buffer);
+        }
         // quantize the image depending on input parameters
         // the input parameters will establish which kernel to use and the number of levels in case of quantization with more than 2 levels
-        
+        cl_event quantize_evt = uniform_quantize(queue, quantization_kernel,
+            video.get_width(), video.get_height(), lws_in, output_image_buffer, input_image_buffer, levels);
         // read the output image
         err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0,
             frame_data_output.size(), frame_data_output.data(), 0, nullptr, nullptr);
