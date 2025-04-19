@@ -282,8 +282,14 @@ int main(int argc, char** argv) {
         }
         std::cout << "Levels for quantization: " << levels << "\n";
     } else {
-        std::cerr << "No levels for quantization provided.\n";
-        return 1;
+        // if the levels are not provided, see if the binarize option is set
+        if (binarize) {
+            levels = 2;
+            std::cout << "Binarization selected, setting levels to 2.\n";
+        } else {
+            std::cerr << "No levels for quantization provided.\n";
+            return 1;
+        }
     }
 
     // Select the OpenCL platform
