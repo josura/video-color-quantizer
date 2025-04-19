@@ -149,11 +149,13 @@ int main(int argc, char** argv) {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     std::string input_file, output_file;
+    bool binarize = false;
     // Add options
     desc.add_options()
         ("help,h", "produce help message")
         ("input,i", po::value<std::string>(), "input video file name")
         ("levels,l", po::value<int>()->default_value(256), "number of levels for quantization")
+        ("binarize", po::bool_switch(&binarize)->default_value(false), "binarize the image")
         ("output,o", po::value<std::string>(), "output video file name");
     
     // Parse the command line arguments
