@@ -180,9 +180,9 @@ int main(int argc, char** argv) {
     desc.add_options()
         ("help,h", "produce help message")
         ("input,i", po::value<std::string>(), "input video file name")
-        ("levels,l", po::value<int>()->default_value(256), "number of levels for quantization")
-        ("binarize", po::bool_switch(&binarize)->default_value(false), "binarize the image")
-        ("grayscale", po::bool_switch(&grayscale)->default_value(false), "convert to grayscale")
+        ("levels,l", po::value<int>(), "number of levels for quantization")
+        ("binarize", po::bool_switch(&binarize)->default_value(false), "binarize the image, making the levels of the quantization 0 and 1 for every channel, meaning that the value will be either 0 or 255")
+        ("grayscale", po::bool_switch(&grayscale)->default_value(false), "convert to grayscale using the luminosity method")
         ("output,o", po::value<std::string>(), "output video file name");
     
     // Parse the command line arguments
@@ -198,6 +198,12 @@ int main(int argc, char** argv) {
     if (vm.count("input")) {
         input_file = vm["input"].as<std::string>();
         std::cout << "Input file: " << input_file << std::endl;
+        // Check if the input file exists
+        std::ifstream file(input_file);
+        if (!file) {
+            std::cerr << "Input file does not exist: " << input_file << "\n";
+            return 1;
+        }
     } else {
         std::cerr << "No input file provided.\n"; 
         return 1;
@@ -210,6 +216,22 @@ int main(int argc, char** argv) {
         std::cerr << "No output file provided.\n";
         return 1;
     }
+
+    // Check if the levels for quantization are provided
+    int levels = 0;
+    if (vm.count("levels")) {
+        levels = vm["levels"].as<int>();
+        // control if the levels are less than 256 and more or equal than 2
+        if (levels < 2 || levels > 256) {
+            std::cerr << "The number of levels for quantization must be between 2 and 256.\n";
+            return 1;
+        }
+        std::cout << "Levels for quantization: " << levels << "\n";
+    } else {
+        std::cerr << "No levels for quantization provided.\n";
+        return 1;
+    }
+
     // Select the OpenCL platform
     cl_platform_id platform = ocl::select_platform();
     // Select the OpenCL device
