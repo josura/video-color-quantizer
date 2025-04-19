@@ -384,8 +384,14 @@ int main(int argc, char** argv) {
     cl_kernel bgra_to_rgba_kernel = clCreateKernel(program, "brga_to_rgba", &err);
     ocl::check(err, "Creating kernel bgra_to_rgba");
     std::vector<uint8_t> frame_data_output(video.get_width() * video.get_height() * 4); // RGBA
-    cl_kernel quantization_kernel = clCreateKernel(program, "uniform_quantize_nearest", &err);
-    ocl::check(err, "Creating kernel quantization");
+    cl_kernel quantization_kernel;
+    if (binarize) {
+        quantization_kernel = clCreateKernel(program, "uniform_quantize_binary_bitshift", &err);
+        ocl::check(err, "Creating kernel quantize_binarize");
+    } else {
+        quantization_kernel = clCreateKernel(program, "uniform_quantize_nearest", &err);
+        ocl::check(err, "Creating kernel uniform_quantize");
+    }
     // get information on the preferred work group size
     err = clGetKernelWorkGroupInfo(quantization_kernel, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
         sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
@@ -409,7 +415,7 @@ int main(int argc, char** argv) {
         clWaitForEvents(1, &bgra_to_rgba_evt);
         // quantize the image depending on input parameters
         // the input parameters will establish which kernel to use and the number of levels in case of quantization with more than 2 levels
-
+        
         // read the output image
         err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0,
             frame_data_output.size(), frame_data_output.data(), 0, nullptr, nullptr);
