@@ -400,7 +400,7 @@ int main(int argc, char** argv) {
     }
     cl_kernel grayscale_kernel;
     if (grayscale) {
-        grayscale_kernel = clCreateKernel(program, "rgba_to_grayscale", &err);
+        grayscale_kernel = clCreateKernel(program, "rgb_to_grayscale", &err);
         ocl::check(err, "Creating kernel grayscale");
     }
     // get information on the preferred work group size
@@ -437,8 +437,10 @@ int main(int argc, char** argv) {
         // the input parameters will establish which kernel to use and the number of levels in case of quantization with more than 2 levels
         cl_event quantize_evt = uniform_quantize(queue, quantization_kernel,
             video.get_width(), video.get_height(), lws_in, output_image_buffer, input_image_buffer, levels);
+        // wait for the event to complete
+        clWaitForEvents(1, &quantize_evt);
         // read the output image
-        err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0,
+        err = clEnqueueReadBuffer(queue, input_image_buffer, CL_TRUE, 0,
             frame_data_output.size(), frame_data_output.data(), 0, nullptr, nullptr);
         ocl::check(err, "Reading output image");
         // free the buffers

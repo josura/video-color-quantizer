@@ -123,7 +123,8 @@ kernel void uniform_quantize_binary_bitshift(
     __global const uchar4* input_image,
     __global uchar4* output_image,
     const int width,
-    const int height
+    const int height,
+    const int levels // Not used, but kept for consistency
 ) {
     int x = get_global_id(0);
     int y = get_global_id(1);
