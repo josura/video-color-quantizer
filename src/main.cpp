@@ -302,69 +302,11 @@ int main(int argc, char** argv) {
     cl_command_queue queue = ocl::create_queue(context, device);
     // Create the OpenCL program
     cl_program program = ocl::create_program("src/kernels/uniformQuantization.cl", context, device);
-    // Program for testing vector addition
-    cl_program program2 = ocl::create_program("src/kernels/operations.cl", context, device);
 
-    // test the vector addition on a small vector
-    const int N = 512*512;
-    std::vector<float> a(N, 1.0f);
-    std::vector<float> b(N, 2.0f);
-    std::vector<float> results(N, 0.0f);
     cl_int err;
-    cl_mem a_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, N * sizeof(float), a.data(), &err);
-    ocl::check(err, "Creating buffer for a");
-    cl_mem b_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, N * sizeof(float), b.data(), &err);
-    ocl::check(err, "Creating buffer for b");
-    cl_mem result_buf = clCreateBuffer(context, CL_MEM_WRITE_ONLY, N * sizeof(float), nullptr, &err);
-    ocl::check(err, "Creating buffer for results");
-    // Create the kernel for vector initialization
-    cl_kernel vecinit_k = clCreateKernel(program2, "vector_initialization_twice", &err);
-    ocl::check(err, "Creating kernel vecinit");
 
     // get information on the preferred work group size
     size_t lws_in = 0;
-    err = clGetKernelWorkGroupInfo(vecinit_k, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
-        sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
-    ocl::check(err, "Getting preferred work group size");
-    
-    // Get the event for the kernel
-    cl_event vecinit_evt = vectorInit(queue, vecinit_k, N, lws_in, a_buf, b_buf);
-    // Wait for the event to complete
-    clWaitForEvents(1, &vecinit_evt);
-    // Create the kernel for vector addition
-    cl_kernel vecadd_k = clCreateKernel(program2, "vector_addition4", &err);
-    ocl::check(err, "Creating kernel vecadd");
-    // get information on the preferred work group size
-    err = clGetKernelWorkGroupInfo(vecadd_k, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
-        sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
-    ocl::check(err, "Getting preferred work group size");
-    // Get the event for the kernel
-    cl_event vecadd_evt = vectorAddition(queue, vecadd_k, N, lws_in, a_buf, b_buf, result_buf);
-    // Wait for the event to complete
-    clWaitForEvents(1, &vecadd_evt);
-    // Read the vector initialization results
-    err = clEnqueueReadBuffer(queue, a_buf, CL_TRUE, 0, N * sizeof(float), a.data(), 0, nullptr, nullptr);
-    ocl::check(err, "Reading buffer a");
-    err = clEnqueueReadBuffer(queue, b_buf, CL_TRUE, 0, N * sizeof(float), b.data(), 0, nullptr, nullptr);
-    ocl::check(err, "Reading buffer b");
-    err = clEnqueueReadBuffer(queue, result_buf, CL_TRUE, 0, N * sizeof(float), results.data(), 0, nullptr, nullptr);
-    ocl::check(err, "Reading buffer results");
-    // Control if the results are correct, meaning vector a have increasing values from 0 to N, and vector b has decreasing values from N to 0
-    for (int i = 0; i < N; ++i) {
-        if (results[i] != a[i] + b[i]) {
-            std::cout << "Results are not correct at index " << i << ": " << results[i] << "\n";
-            break;
-        }
-    }
-    // free the buffers
-    clReleaseMemObject(a_buf);
-    clReleaseMemObject(b_buf);
-    clReleaseMemObject(result_buf);
-    // free the kernels
-    clReleaseKernel(vecinit_k);
-    clReleaseKernel(vecadd_k);
-    // free the program
-    clReleaseProgram(program2);
 
     // testing the reading of the video
     VideoReaderFFMPEG video(input_file);
@@ -398,11 +340,8 @@ int main(int argc, char** argv) {
         quantization_kernel = clCreateKernel(program, "uniform_quantize_nearest", &err);
         ocl::check(err, "Creating kernel uniform_quantize");
     }
-    cl_kernel grayscale_kernel;
-    if (grayscale) {
-        grayscale_kernel = clCreateKernel(program, "rgb_to_grayscale", &err);
-        ocl::check(err, "Creating kernel grayscale");
-    }
+    cl_kernel grayscale_kernel = clCreateKernel(program, "rgb_to_grayscale", &err);
+    ocl::check(err, "Creating kernel grayscale");
     // get information on the preferred work group size
     err = clGetKernelWorkGroupInfo(quantization_kernel, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
         sizeof(lws_in), &lws_in, nullptr);  // TODO also change from parameters in the future
