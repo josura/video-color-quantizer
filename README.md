@@ -1,4 +1,5 @@
 # video-color-quantizer
+[![Docs](https://img.shields.io/badge/docs-latest-blue)](https://josura.github.io/video-color-quantizer/)
 Color quantization for videos
 
 ## Requirements
