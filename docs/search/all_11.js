@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['_7evideoreaderffmpeg_0',['~VideoReaderFFMPEG',['../classVideoReaderFFMPEG.html#a214a32e921630c15e2a02da41e335fa1',1,'VideoReaderFFMPEG']]],
-  ['_7evideowriterffmpeg_1',['~VideoWriterFFMPEG',['../classVideoWriterFFMPEG.html#a16d7624072ac9b9039dc70714d322db0',1,'VideoWriterFFMPEG']]]
+  ['yuv_5funiform_5fquantize_5fbinary_5fbitshift_0',['yuv_uniform_quantize_binary_bitshift',['../uniformQuantization_8cl.html#ac1e71a4320c8119f6279919c5985af59',1,'uniformQuantization.cl']]],
+  ['yuv_5funiform_5fquantize_5fnearest_1',['yuv_uniform_quantize_nearest',['../uniformQuantization_8cl.html#a852681fbbfcd29ce20eda38232e15363',1,'uniformQuantization.cl']]]
 ];

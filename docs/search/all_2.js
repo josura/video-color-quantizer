@@ -1,4 +1,8 @@
 var searchData=
 [
-  ['extract_5fframes_5ffrom_5fvideo_0',['extract_frames_from_video',['../video__reader_8cpp.html#aba064ca7894b087a9d0b1a9c2c480897',1,'extract_frames_from_video(const std::string &amp;input_filename, std::vector&lt; std::vector&lt; uint8_t &gt; &gt; &amp;frames, int &amp;width, int &amp;height):&#160;video_reader.cpp'],['../video__reader_8hpp.html#aba064ca7894b087a9d0b1a9c2c480897',1,'extract_frames_from_video(const std::string &amp;input_filename, std::vector&lt; std::vector&lt; uint8_t &gt; &gt; &amp;frames, int &amp;width, int &amp;height):&#160;video_reader.cpp']]]
+  ['check_0',['check',['../namespaceocl.html#ac107db70d31c7cb8ee860cbc45388c10',1,'ocl']]],
+  ['cl_5ftarget_5fopencl_5fversion_1',['CL_TARGET_OPENCL_VERSION',['../ocl__utility_8hpp.html#a5990dea19d4ccb046a3d81b311457add',1,'ocl_utility.hpp']]],
+  ['create_5fcontext_2',['create_context',['../namespaceocl.html#accc55f73ac2a457b9ac9b5dfa58b136c',1,'ocl']]],
+  ['create_5fprogram_3',['create_program',['../namespaceocl.html#acac9b691cbe0a89647c52c92864c8a85',1,'ocl']]],
+  ['create_5fqueue_4',['create_queue',['../namespaceocl.html#a39a4e862ae98aa20d7400533c6dad8a4',1,'ocl']]]
 ];

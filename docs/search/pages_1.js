@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['quantizer_0',['video-color-quantizer',['../index.html',1,'']]]
+  ['ffmpeg_0',['Video Quantization with OpenCL and FFmpeg',['../index.html',1,'']]]
 ];
