@@ -1,7 +1,6 @@
 # video-color-quantizer
 [![Docs](https://img.shields.io/badge/docs-latest-blue)](https://josura.github.io/video-color-quantizer/)
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-]
 
 Color quantization for videos
 
