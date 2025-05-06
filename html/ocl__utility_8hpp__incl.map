@@ -1,0 +1,21 @@
+<map id="src/ocl_utility.hpp" name="src/ocl_utility.hpp">
+<area shape="rect" id="Node000001" title="A modern C++ utility header for managing common OpenCL boilerplate code." alt="" coords="357,5,492,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,71,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="357,32,234,52,85,81,84,76,233,47,356,27"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="95,79,160,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="376,33,174,81,173,76,375,28"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="185,79,265,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="393,33,271,76,270,71,392,28"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="289,79,363,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="410,33,355,73,352,68,407,29"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="387,79,462,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="427,31,427,65,422,65,422,31"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="487,79,549,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="441,29,494,68,490,72,438,33"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="574,79,633,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="454,28,563,71,561,76,452,33"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="657,79,728,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="468,28,644,74,643,80,467,33"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="753,79,811,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="493,28,605,48,740,76,739,81,604,53,492,33"/>
+</map>
